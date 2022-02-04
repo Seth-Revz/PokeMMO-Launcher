@@ -5,12 +5,52 @@
 #include <QFile>
 #include <QInputDialog>
 #include <QStandardPaths>
+#include <QPalette>
+#include <QPainter>
+#include <QScreen>
+#include <QLabel>
+#include <QMouseEvent>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint | Qt::FramelessWindowHint);
+
+    QRect screen = QApplication::primaryScreen()->geometry();
+    int windowHeight = screen.height()/4;
+    int windowWidth = screen.width()/4;
+
+    setFixedSize(windowWidth, windowHeight);
+
+    _pixmapBg.load(":/res/background.jpeg");
+
+    this->frame = new QFrame(this);
+    this->frame->setGeometry(0, 5, 1000, windowHeight/14);
+    this->frame->setStyleSheet("background-color: rgba(0,0,0,90);");
+    this->frame->installEventFilter(this);
+
+    QLabel *label = new QLabel(this);
+    label->setText("PokeMMO Launcher");
+    label->setFont(QFont("Times", windowHeight/14 - 6));
+    label->adjustSize();
+    label->setStyleSheet("color: rgb(255, 255, 255);");
+    label->setGeometry((windowWidth-label->width())/2, 5, label->width(), windowHeight/14);
+
+    QPushButton *close_button = new QPushButton(this);
+    close_button->setGeometry(windowWidth-(windowHeight/14)-5, 5, windowHeight/14, windowHeight/14);
+    close_button->setFlat(true);
+    QPixmap pixmap(":/res/icon_close.png");
+    QIcon ButtonIcon(pixmap);
+    close_button->setIcon(ButtonIcon);
+    close_button->setIconSize(QSize(windowHeight/14, windowHeight/14));
+    close_button->setStyleSheet("QPushButton:pressed{background-color: rgba(0,0,0,100);}");
+
+
+    connect(close_button, SIGNAL(clicked()), this, SLOT(on_close_button_clicked()));
+
     QDir().mkdir("files");
     LoadFiles();
     LoadConfig();
@@ -19,6 +59,28 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::paintEvent(QPaintEvent *pe)
+{
+    QPainter painter(this);
+
+    auto winSize = size();
+    auto pixmapRatio = (float)_pixmapBg.width() / _pixmapBg.height();
+    auto windowRatio = (float)winSize.width() / winSize.height();
+
+    if(pixmapRatio > windowRatio)
+    {
+      auto newWidth = (int)(winSize.height() * pixmapRatio);
+      auto offset = (newWidth - winSize.width()) / -2;
+      painter.drawPixmap(offset, 0, newWidth, winSize.height(), _pixmapBg);
+    }
+    else
+    {
+      auto newHeight = (int)(winSize.width() / pixmapRatio);
+      auto offset = (newHeight - winSize.height()) / -2;
+      painter.drawPixmap(0, offset, winSize.width(), newHeight, _pixmapBg);
+    }
 }
 
 void MainWindow::LoadFiles()
@@ -40,7 +102,7 @@ bool MainWindow::LoadConfig()
     }
     QTextStream stream(&file);
     ui->comboBox->setCurrentText(stream.readLine());
-    ui->checkBox->setChecked(stream.readLine().toInt());
+//    ui->checkBox->setChecked(stream.readLine().toInt());
 
     file.close();
     return true;
@@ -54,7 +116,7 @@ bool MainWindow::saveConfig(){
     }
     QTextStream stream(&file);
     stream << ui->comboBox->currentText() << "\n";
-    stream << ui->checkBox->isChecked();
+//    stream << ui->checkBox->isChecked();
 
     file.close();
     return true;
@@ -71,12 +133,12 @@ void MainWindow::on_pushButton_clicked()
 
     QProcess::startDetached(path + "/AppData/Local/Programs/PokeMMO/PokeMMO.exe");
 
-    if (ui->checkBox->isChecked()){
-        QString GECpath = path + "/AppData/Local/Programs/PokeMMO/data/mods/Gilans Encounter Counter/GEC";
-        QProcess *child = new QProcess();
-        child->setWorkingDirectory(GECpath);
-        child->start(GECpath + "/GEC.exe");
-    }
+//    if (ui->checkBox->isChecked()){
+//        QString GECpath = path + "/AppData/Local/Programs/PokeMMO/data/mods/Gilans Encounter Counter/GEC";
+//        QProcess *child = new QProcess();
+//        child->setWorkingDirectory(GECpath);
+//        child->start(GECpath + "/GEC.exe");
+//    }
 
     saveConfig();
     QApplication::quit();
@@ -111,4 +173,23 @@ void MainWindow::on_pushButton_3_clicked()
         QFile::remove(QString("files/%1.cred").arg(selected));
     }
     LoadFiles();
+}
+
+void MainWindow::mousePressEvent(QMouseEvent *event) {
+    mouseClick_X_Coordinate = event->position().x();
+    mouseClick_Y_Coordinate = event->position().y();
+}
+
+/**
+    Works with mousePressEvent to allow the window to be dragged by clicking and holding.
+    @param the mouse event observed by QT
+*/
+void MainWindow::mouseMoveEvent(QMouseEvent *event) {
+    move(event->globalPosition().x()-mouseClick_X_Coordinate,event->globalPosition().y()-mouseClick_Y_Coordinate);
+}
+
+void MainWindow::on_close_button_clicked()
+{
+//    saveConfig();
+    QApplication::quit();
 }
