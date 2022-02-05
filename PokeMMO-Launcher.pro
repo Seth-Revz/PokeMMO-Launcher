@@ -15,8 +15,9 @@ SOURCES += \
 HEADERS += \
     mainwindow.h
 
-FORMS += \
-    mainwindow.ui
+FORMS +=
+
+RC_ICONS = PokeMMO-Launcher.ico
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

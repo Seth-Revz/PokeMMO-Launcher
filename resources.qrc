@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>res/background.jpeg</file>
         <file>res/icon_close.png</file>
+        <file>res/mechabold.ttf</file>
     </qresource>
 </RCC>

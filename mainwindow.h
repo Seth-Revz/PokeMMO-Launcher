@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QFrame>
+#include <QComboBox>
+#include <QPushButton>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -23,20 +25,19 @@ public:
     bool pressed;
     QPoint current;
     QFrame *frame;
+    QComboBox *selection_box;
+    QPushButton *gec_button;
+    bool isGEC = false;
 
 
 private slots:
-    void on_pushButton_clicked();
-
-    void on_pushButton_2_clicked();
-
-    void on_pushButton_3_clicked();
-
+    void on_launch_button_clicked();
+    void on_add_button_clicked();
+    void on_remove_button_clicked();
+    void on_gec_button_clicked();
     void on_close_button_clicked();
 
 private:
-    Ui::MainWindow *ui;
-
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     int mouseClick_X_Coordinate;
