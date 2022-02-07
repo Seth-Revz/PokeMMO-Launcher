@@ -21,8 +21,8 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint | Qt::FramelessWindowHint);
 
     QRect screen = QApplication::primaryScreen()->geometry();
-    int windowHeight = screen.height()/4;
-    int windowWidth = screen.width()/4;
+    int windowHeight = screen.height()/2;
+    int windowWidth = screen.width()/2;
 
     setFixedSize(windowWidth, windowHeight);
 
