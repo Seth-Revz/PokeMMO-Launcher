@@ -12,3 +12,5 @@
     <p>GEC is <a href="https://forums.pokemmo.eu/index.php?/topic/137452-tool-gilans-encounter-counter-beta-available-v102-update/">Gilans Encounter Counter</a>. If you dont know what that is or dont use it, ignore this    button. Red = off, Green = on</p>
 </div>
 
+<p><sub>Pre-built binary is in releases.</sub></p>
+
