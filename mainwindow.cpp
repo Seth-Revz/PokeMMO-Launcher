@@ -128,6 +128,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::paintEvent(QPaintEvent *pe)
 {
+    (void)pe;
     QPainter painter(this);
 
     auto winSize = size();
@@ -190,7 +191,8 @@ bool MainWindow::LoadConfig()
     return true;
 }
 
-bool MainWindow::saveConfig(){
+bool MainWindow::saveConfig()
+{
     QFile file("files/config.txt");
     if(!file.open(QIODevice::WriteOnly)){
         QTextStream(stdout) << "Cannot open the file. \n" << file.errorString() << "\n";
@@ -267,7 +269,8 @@ void MainWindow::on_gec_button_clicked()
         this->gec_button->setStyleSheet("background-color: #A91409; color: white; border: 2px solid black;");
 }
 
-void MainWindow::mousePressEvent(QMouseEvent *event) {
+void MainWindow::mousePressEvent(QMouseEvent *event)
+{
     this->pressed = false;
     if (this->selection_frame->x() > event->position().x() || event->position().x() > (this->selection_frame->x() + this->selection_frame->width()) || (this->selection_frame->y() > event->position().y() || event->position().y() > (this->selection_frame->y() + this->selection_frame->height()))){
         this->pressed = true;
@@ -276,11 +279,14 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
     }
 }
 
-void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
+void MainWindow::mouseReleaseEvent(QMouseEvent *event)
+{
+    (void)event;
     this->pressed = false;
 }
 
-void MainWindow::mouseMoveEvent(QMouseEvent *event) {
+void MainWindow::mouseMoveEvent(QMouseEvent *event)
+{
     if (this->pressed)
         move(event->globalPosition().x()-mouseClick_X_Coordinate,event->globalPosition().y()-mouseClick_Y_Coordinate);
 }
