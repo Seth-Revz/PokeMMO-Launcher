@@ -23,7 +23,6 @@ MainWindow::MainWindow(QWidget *parent)
     QRect screen = QApplication::primaryScreen()->geometry();
     int windowHeight = screen.height()/2;
     int windowWidth = screen.width()/2;
-
     setFixedSize(windowWidth, windowHeight);
 
     int id = QFontDatabase::addApplicationFont(":/res/mechabold.ttf");
@@ -120,8 +119,6 @@ MainWindow::MainWindow(QWidget *parent)
     QDir().mkdir("files");
     LoadFiles();
     LoadConfig();
-
-    QTextStream(stdout) << "Frame Pos " << this->selection_frame->x() << " x " << this->selection_frame->y() << "\n";
 }
 
 MainWindow::~MainWindow()
@@ -233,7 +230,6 @@ void MainWindow::on_launch_button_clicked()
 void MainWindow::on_add_button_clicked()
 {
     QString fileName = QFileDialog::getOpenFileName(this, "Select Credential File", this->pokemmo_path->toLatin1() + "/config");
-    QTextStream(stdout) << fileName;
     if (fileName != ""){
         bool ok;
         QString text = QInputDialog::getText(this, tr("Save as"),
@@ -272,26 +268,19 @@ void MainWindow::on_gec_button_clicked()
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *event) {
-    QTextStream(stdout) << "Mouse Event " << event->position().x() << " x " << event->position().y() << "\n";
     this->pressed = false;
     if (this->selection_frame->x() > event->position().x() || event->position().x() > (this->selection_frame->x() + this->selection_frame->width()) || (this->selection_frame->y() > event->position().y() || event->position().y() > (this->selection_frame->y() + this->selection_frame->height()))){
         this->pressed = true;
         mouseClick_X_Coordinate = event->position().x();
         mouseClick_Y_Coordinate = event->position().y();
     }
-    QTextStream(stdout) << "Pressed: " << this->pressed << "\n";
 }
 
 void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
     this->pressed = false;
 }
 
-/**
-    Works with mousePressEvent to allow the window to be dragged by clicking and holding.
-    @param the mouse event observed by QT
-*/
 void MainWindow::mouseMoveEvent(QMouseEvent *event) {
-    QTextStream(stdout) << "Mouse Event " << event->position().x() << " x " << event->position().y() << "\n";
     if (this->pressed)
         move(event->globalPosition().x()-mouseClick_X_Coordinate,event->globalPosition().y()-mouseClick_Y_Coordinate);
 }
@@ -299,7 +288,6 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 void MainWindow::on_folder_button_clicked()
 {
     QString file_path = QFileDialog::getExistingDirectory(this, "Select PokeMMO Folder", QDir::homePath());
-    QTextStream(stdout) << file_path << "\n";
 
     if (file_path != "")
         this->pokemmo_path = new QString(file_path);
@@ -310,12 +298,11 @@ void MainWindow::on_folder_button_clicked()
 void MainWindow::on_background_button_clicked()
 {
     QString file_path = QFileDialog::getOpenFileName(this, "New Background Image", QDir::homePath() + "/Pictures");
-    QTextStream(stdout) << file_path << "\n";
 
     if (file_path != ""){
         QDir().mkdir("imgs");
         QString fileName = file_path.split('/').last();
-        QTextStream(stdout) << fileName << "\n";
+
         if (QFile::exists(QString("imgs/%1").arg(fileName))){
             QFile::remove(QString("imgs/%1").arg(fileName));
         }
@@ -323,7 +310,6 @@ void MainWindow::on_background_button_clicked()
         QFile::copy(file_path, QString("imgs/%1").arg(fileName));
 
         if (_pixmapBg.load(QString("imgs/%1").arg(fileName))){
-            QTextStream(stdout) << "Loaded" << "\n";
             this->background_image = new QString(fileName);
         }
 

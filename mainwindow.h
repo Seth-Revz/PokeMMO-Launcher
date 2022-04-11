@@ -18,20 +18,6 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    void paintEvent(QPaintEvent *pe);
-    void LoadFiles();
-    bool LoadConfig();
-    bool saveConfig();
-    QPixmap _pixmapBg;
-    bool pressed;
-    QPoint current;
-    QFrame *frame;
-    QFrame *selection_frame;
-    QComboBox *selection_box;
-    QPushButton *gec_button;
-    QString *background_image;
-    QString *pokemmo_path = new QString(QDir::homePath() + "/AppData/Local/Programs/PokeMMO");
-    bool isGEC = false;
 
 private slots:
     void on_launch_button_clicked();
@@ -43,6 +29,21 @@ private slots:
     void on_close_button_clicked();
 
 private:
+    void paintEvent(QPaintEvent *pe);
+    void LoadFiles();
+    bool LoadConfig();
+    bool saveConfig();
+    QPixmap _pixmapBg;
+    bool pressed = false;
+    QPoint current;
+    QFrame *frame;
+    QFrame *selection_frame;
+    QComboBox *selection_box;
+    QPushButton *gec_button;
+    QString *background_image;
+    QString *pokemmo_path = new QString(QDir::homePath() + "/AppData/Local/Programs/PokeMMO");
+    bool isGEC = false;
+
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
