@@ -66,44 +66,62 @@ MainWindow::MainWindow(QWidget *parent)
     selection_edit->setReadOnly(true);
     this->selection_box->setGeometry((windowWidth - this->selection_box->width())/2, windowHeight - (windowHeight/5) - this->selection_box->height() - add_button->height() - 6, this->selection_box->width(), this->selection_box->height());
 
-    QFrame *selection_frame = new QFrame(this);
+    this->selection_frame = new QFrame(this);
     selection_frame->setFixedSize(windowWidth/3 + 20, launch_button->geometry().bottom() - this->selection_box->geometry().top() + 20);
     selection_frame->setGeometry(this->selection_box->geometry().left() - 10, this->selection_box->geometry().top() - 10, selection_frame->width(), selection_frame->height());
     selection_frame->setStyleSheet("QFrame{background-color: rgba(0,0,0,90); border-radius: 5px;}");
     selection_frame->lower();
 
-    _pixmapBg.load(":/res/background.jpeg");
+//    this->frame = new QFrame(this);
+//    this->frame->setGeometry(0, 5, windowWidth, windowHeight/14);
+//    this->frame->setStyleSheet("background-color: rgba(0,0,0,90);");
 
-    this->frame = new QFrame(this);
-    this->frame->setGeometry(0, 5, windowWidth, windowHeight/14);
-    this->frame->setStyleSheet("background-color: rgba(0,0,0,90);");
+//    QLabel *label = new QLabel(this);
+//    label->setText("PokeMMO Launcher");
+//    label->setFont(QFont(mechabold, windowHeight/14 - 10));
+//    label->adjustSize();
+//    label->setStyleSheet("color: rgb(255, 255, 255);");
+//    label->setGeometry((windowWidth-label->width())/2, 5, label->width(), windowHeight/14);
 
-    QLabel *label = new QLabel(this);
-    label->setText("PokeMMO Launcher");
-    label->setFont(QFont(mechabold, windowHeight/14 - 10));
-    label->adjustSize();
-    label->setStyleSheet("color: rgb(255, 255, 255);");
-    label->setGeometry((windowWidth-label->width())/2, 5, label->width(), windowHeight/14);
+    QPushButton *folder_button = new QPushButton(this);
+    folder_button->setGeometry(windowWidth-(3*(windowHeight/14))-5, 5, windowHeight/14, windowHeight/14);
+    folder_button->setFlat(true);
+    QPixmap folder_pixmap(":/res/folder_icon.png");
+    QIcon folder_button_icon(folder_pixmap);
+    folder_button->setIcon(folder_button_icon);
+    folder_button->setIconSize(QSize(windowHeight/15, windowHeight/15));
+    folder_button->setStyleSheet("QPushButton:pressed{background-color: rgba(0,0,0,0);}");
+
+    QPushButton *background_button = new QPushButton(this);
+    background_button->setGeometry(windowWidth-(2*(windowHeight/14))-5, 5, windowHeight/14, windowHeight/14);
+    background_button->setFlat(true);
+    QPixmap background_pixmap(":/res/background_icon.svg");
+    QIcon background_button_icon(background_pixmap);
+    background_button->setIcon(background_button_icon);
+    background_button->setIconSize(QSize(windowHeight/15, windowHeight/15));
+    background_button->setStyleSheet("QPushButton:pressed{background-color: rgba(0,0,0,0);}");
 
     QPushButton *close_button = new QPushButton(this);
     close_button->setGeometry(windowWidth-(windowHeight/14)-5, 5, windowHeight/14, windowHeight/14);
     close_button->setFlat(true);
-    QPixmap pixmap(":/res/icon_close.png");
-    QIcon ButtonIcon(pixmap);
-    close_button->setIcon(ButtonIcon);
-    close_button->setIconSize(QSize(windowHeight/15, windowHeight/15));
-    close_button->setStyleSheet("QPushButton:pressed{background-color: rgba(0,0,0,100);}");
-
+    close_button->setFont(QFont(mechabold, windowHeight/14 - 10));
+    close_button->setText("X");
+    close_button->setStyleSheet("QPushButton:pressed{background-color: rgba(0,0,0,0);}");
 
     connect(launch_button, SIGNAL(clicked()), this, SLOT(on_launch_button_clicked()));
     connect(add_button, SIGNAL(clicked()), this, SLOT(on_add_button_clicked()));
     connect(remove_button, SIGNAL(clicked()), this, SLOT(on_remove_button_clicked()));
     connect(this->gec_button, SIGNAL(clicked()), this, SLOT(on_gec_button_clicked()));
+    connect(folder_button, SIGNAL(clicked()), this, SLOT(on_folder_button_clicked()));
+    connect(background_button, SIGNAL(clicked()), this, SLOT(on_background_button_clicked()));
     connect(close_button, SIGNAL(clicked()), this, SLOT(on_close_button_clicked()));
+    connect(this->selection_box, SIGNAL(clicked()), this, SLOT(mouseReleaseEvent()));
 
     QDir().mkdir("files");
     LoadFiles();
     LoadConfig();
+
+    QTextStream(stdout) << "Frame Pos " << this->selection_frame->x() << " x " << this->selection_frame->y() << "\n";
 }
 
 MainWindow::~MainWindow()
@@ -148,14 +166,27 @@ bool MainWindow::LoadConfig()
     QFile file("files/config.txt");
     if(!file.open(QIODevice::ReadOnly)){
         QTextStream(stdout) << "Cannot open the file. \n" << file.errorString() << "\n";
+        _pixmapBg.load(":/res/background.png");
         return false;
     }
     QTextStream stream(&file);
+    QString path = stream.readLine();
+    if (path != "")
+        this->pokemmo_path = new QString(path);
     this->selection_box->setCurrentText(stream.readLine());
     if (stream.readLine().toInt())
     {
         this->isGEC = true;
         this->gec_button->setStyleSheet("background-color: #4CAF50; color: white; border: 2px solid black;");
+    }
+    QString bgd(stream.readLine());
+    if (bgd != "")
+    {
+        this->background_image = new QString(bgd);
+        _pixmapBg.load(QString("imgs/%1").arg(bgd));
+    } else {
+        this->background_image = new QString("");
+        _pixmapBg.load(":/res/background.png");
     }
 
     file.close();
@@ -169,8 +200,10 @@ bool MainWindow::saveConfig(){
         return false;
     }
     QTextStream stream(&file);
+    stream << this->pokemmo_path->toLatin1() << "\n";
     stream << this->selection_box->currentText() << "\n";
-    stream << this->isGEC;
+    stream << this->isGEC << "\n";
+    stream << this->background_image->toLatin1() << "\n";
 
     file.close();
     return true;
@@ -178,17 +211,16 @@ bool MainWindow::saveConfig(){
 
 void MainWindow::on_launch_button_clicked()
 {
-    QString path = QDir::homePath();
     QString selected = this->selection_box->currentText();
-    if (QFile::exists(path + "/AppData/Local/Programs/PokeMMO/config/savedcredentials.properties")){
-        QFile::remove(path + "/AppData/Local/Programs/PokeMMO/config/savedcredentials.properties");
+    if (QFile::exists(this->pokemmo_path->toLatin1() + "/config/savedcredentials.properties")){
+        QFile::remove(this->pokemmo_path->toLatin1() + "/config/savedcredentials.properties");
     }
-    QFile::copy(QString("files/%1.cred").arg(selected), path + "/AppData/Local/Programs/PokeMMO/config/savedcredentials.properties");
+    QFile::copy(QString("files/%1.cred").arg(selected), this->pokemmo_path->toLatin1() + "/config/savedcredentials.properties");
 
-    QProcess::startDetached(path + "/AppData/Local/Programs/PokeMMO/PokeMMO.exe");
+    QProcess::startDetached(this->pokemmo_path->toLatin1() + "/PokeMMO.exe");
 
     if (this->isGEC){
-        QString GECpath = path + "/AppData/Local/Programs/PokeMMO/data/mods/Gilans Encounter Counter/GEC";
+        QString GECpath = this->pokemmo_path->toLatin1() + "/data/mods/Gilans Encounter Counter/GEC";
         QProcess *child = new QProcess();
         child->setWorkingDirectory(GECpath);
         child->start(GECpath + "/GEC.exe");
@@ -200,8 +232,7 @@ void MainWindow::on_launch_button_clicked()
 
 void MainWindow::on_add_button_clicked()
 {
-    QString path = QDir::homePath();
-    QString fileName = QFileDialog::getOpenFileName(this, "Select Credential File", path + "/AppData/Local/Programs/PokeMMO/config");
+    QString fileName = QFileDialog::getOpenFileName(this, "Select Credential File", this->pokemmo_path->toLatin1() + "/config");
     QTextStream(stdout) << fileName;
     if (fileName != ""){
         bool ok;
@@ -217,6 +248,7 @@ void MainWindow::on_add_button_clicked()
         }
         LoadFiles();
     }
+    saveConfig();
 }
 
 void MainWindow::on_remove_button_clicked()
@@ -240,8 +272,18 @@ void MainWindow::on_gec_button_clicked()
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *event) {
-    mouseClick_X_Coordinate = event->position().x();
-    mouseClick_Y_Coordinate = event->position().y();
+    QTextStream(stdout) << "Mouse Event " << event->position().x() << " x " << event->position().y() << "\n";
+    this->pressed = false;
+    if (this->selection_frame->x() > event->position().x() || event->position().x() > (this->selection_frame->x() + this->selection_frame->width()) || (this->selection_frame->y() > event->position().y() || event->position().y() > (this->selection_frame->y() + this->selection_frame->height()))){
+        this->pressed = true;
+        mouseClick_X_Coordinate = event->position().x();
+        mouseClick_Y_Coordinate = event->position().y();
+    }
+    QTextStream(stdout) << "Pressed: " << this->pressed << "\n";
+}
+
+void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
+    this->pressed = false;
 }
 
 /**
@@ -249,7 +291,47 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
     @param the mouse event observed by QT
 */
 void MainWindow::mouseMoveEvent(QMouseEvent *event) {
-    move(event->globalPosition().x()-mouseClick_X_Coordinate,event->globalPosition().y()-mouseClick_Y_Coordinate);
+    QTextStream(stdout) << "Mouse Event " << event->position().x() << " x " << event->position().y() << "\n";
+    if (this->pressed)
+        move(event->globalPosition().x()-mouseClick_X_Coordinate,event->globalPosition().y()-mouseClick_Y_Coordinate);
+}
+
+void MainWindow::on_folder_button_clicked()
+{
+    QString file_path = QFileDialog::getExistingDirectory(this, "Select PokeMMO Folder", QDir::homePath());
+    QTextStream(stdout) << file_path << "\n";
+
+    if (file_path != "")
+        this->pokemmo_path = new QString(file_path);
+
+    saveConfig();
+}
+
+void MainWindow::on_background_button_clicked()
+{
+    QString file_path = QFileDialog::getOpenFileName(this, "New Background Image", QDir::homePath() + "/Pictures");
+    QTextStream(stdout) << file_path << "\n";
+
+    if (file_path != ""){
+        QDir().mkdir("imgs");
+        QString fileName = file_path.split('/').last();
+        QTextStream(stdout) << fileName << "\n";
+        if (QFile::exists(QString("imgs/%1").arg(fileName))){
+            QFile::remove(QString("imgs/%1").arg(fileName));
+        }
+
+        QFile::copy(file_path, QString("imgs/%1").arg(fileName));
+
+        if (_pixmapBg.load(QString("imgs/%1").arg(fileName))){
+            QTextStream(stdout) << "Loaded" << "\n";
+            this->background_image = new QString(fileName);
+        }
+
+    } else {
+        this->background_image = new QString("");
+        _pixmapBg.load(":/res/background.png");
+    }
+    saveConfig();
 }
 
 void MainWindow::on_close_button_clicked()
