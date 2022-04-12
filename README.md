@@ -13,5 +13,5 @@
     <br>Red = off, Green = on</p>
 </div>
 
-<p><sub>Pre-built binary is in releases.</sub></p>
+<p><sub>Pre-built exe is in <a href="https://github.com/Seth-Revz/PokeMMO-Launcher/releases/tag/Latest">releases</a>.</sub></p>
 
