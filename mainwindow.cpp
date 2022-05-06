@@ -370,7 +370,7 @@ void MainWindow::on_background_button_clicked()
         if (QFile::exists(QString("imgs/%1").arg(file_name))){
             QFile::copy(file_path, QString("imgs/temp_image"));
             QFile::remove(QString("imgs/%1").arg(file_name));
-            QFile::rename("imgs/temp_image", file_path);
+            QFile::rename("imgs/temp_image", "imgs/" + file_name);
         }else{
             QFile::copy(file_path, QString("imgs/%1").arg(file_name));
         }
