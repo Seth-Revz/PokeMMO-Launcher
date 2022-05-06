@@ -12,5 +12,5 @@
     <p>Use the Counter button to autostart your encounter counter of choice. First time you click this, it will ask for the location of the Counters exe. Use the folder icon the top right to change it.</p>
 </div>
 
-<p><sub>Pre-built binary is in releases.</sub></p>
+<p><sub>Pre-built exe is in <a href="https://github.com/Seth-Revz/PokeMMO-Launcher/releases/tag/Latest">releases</a>.</sub></p>
 
