@@ -23,8 +23,9 @@ private slots:
     void on_launch_button_clicked();
     void on_add_button_clicked();
     void on_remove_button_clicked();
-    void on_gec_button_clicked();
-    void on_folder_button_clicked();
+    void on_counter_button_clicked();
+    void on_counter_folder_button_clicked();
+    void on_pokemmo_folder_button_clicked();
     void on_background_button_clicked();
     void on_close_button_clicked();
 
@@ -39,10 +40,11 @@ private:
     QFrame *frame;
     QFrame *selection_frame;
     QComboBox *selection_box;
-    QPushButton *gec_button;
+    QPushButton *counter_button;
     QString *background_image;
-    QString *pokemmo_path = new QString(QDir::homePath() + "/AppData/Local/Programs/PokeMMO");
-    bool isGEC = false;
+    QString *pokemmo_path;
+    QString *counter_path;
+    bool counter = false;
 
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);

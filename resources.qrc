@@ -4,5 +4,7 @@
         <file>res/background_icon.svg</file>
         <file>res/folder_icon.png</file>
         <file>res/background.png</file>
+        <file>res/counter_icon.png</file>
+        <file>res/pokemmo_icon.png</file>
     </qresource>
 </RCC>
