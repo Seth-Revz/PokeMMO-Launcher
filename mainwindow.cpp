@@ -10,6 +10,7 @@
 #include <QScreen>
 #include <QPushButton>
 #include <QLabel>
+#include <QMovie>
 #include <QMouseEvent>
 #include <QComboBox>
 #include <QFontDatabase>
@@ -28,6 +29,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     int mecha_id = QFontDatabase::addApplicationFont(":/res/mechabold.ttf");
     QString mechabold = QFontDatabase::applicationFontFamilies(mecha_id).at(0);
+
+    QLabel *movie_label = new QLabel(this);
+    movie_label->setGeometry(0, 0, windowWidth, windowHeight);
 
     QPushButton *launch_button = new QPushButton(this);
     launch_button->setFixedSize(windowWidth/3, windowHeight/12);
@@ -130,6 +134,18 @@ MainWindow::MainWindow(QWidget *parent)
     QDir().mkdir("files");
     LoadFiles();
     LoadConfig();
+
+    QTextStream(stdout) << "\"" << *this->background_image << "\"\n";
+
+    if(!this->background_image->isEmpty()){
+        this->background_movie = new QMovie("imgs/" + *this->background_image);
+    } else {
+        this->background_movie = new QMovie(":/res/background.png");
+    }
+    this->background_movie->setScaledSize({windowWidth, windowHeight});
+    this->background_movie->start();
+    movie_label->setAttribute(Qt::WA_NoSystemBackground);
+    movie_label->setMovie(this->background_movie);
 }
 
 MainWindow::~MainWindow()
@@ -137,28 +153,28 @@ MainWindow::~MainWindow()
 //    delete ui;
 }
 
-void MainWindow::paintEvent(QPaintEvent *pe)
-{
-    (void)pe;
-    QPainter painter(this);
+//void MainWindow::paintEvent(QPaintEvent *pe)
+//{
+//    (void)pe;
+//    QPainter painter(this);
 
-    auto winSize = size();
-    auto pixmapRatio = (float)_pixmapBg.width() / _pixmapBg.height();
-    auto windowRatio = (float)winSize.width() / winSize.height();
+//    auto winSize = size();
+//    auto pixmapRatio = (float)_pixmapBg.width() / _pixmapBg.height();
+//    auto windowRatio = (float)winSize.width() / winSize.height();
 
-    if(pixmapRatio > windowRatio)
-    {
-      auto newWidth = (int)(winSize.height() * pixmapRatio);
-      auto offset = (newWidth - winSize.width()) / -2;
-      painter.drawPixmap(offset, 0, newWidth, winSize.height(), _pixmapBg);
-    }
-    else
-    {
-      auto newHeight = (int)(winSize.width() / pixmapRatio);
-      auto offset = (newHeight - winSize.height()) / -2;
-      painter.drawPixmap(0, offset, winSize.width(), newHeight, _pixmapBg);
-    }
-}
+//    if(pixmapRatio > windowRatio)
+//    {
+//      auto newWidth = (int)(winSize.height() * pixmapRatio);
+//      auto offset = (newWidth - winSize.width()) / -2;
+//      painter.drawPixmap(offset, 0, newWidth, winSize.height(), _pixmapBg);
+//    }
+//    else
+//    {
+//      auto newHeight = (int)(winSize.width() / pixmapRatio);
+//      auto offset = (newHeight - winSize.height()) / -2;
+//      painter.drawPixmap(0, offset, winSize.width(), newHeight, _pixmapBg);
+//    }
+//}
 
 void MainWindow::LoadFiles()
 {
@@ -215,10 +231,8 @@ bool MainWindow::LoadConfig()
     if (bgd != "")
     {
         this->background_image = new QString(bgd);
-        _pixmapBg.load(QString("imgs/%1").arg(bgd));
     } else {
         this->background_image = new QString("");
-        _pixmapBg.load(":/res/background.png");
     }
 
     file.close();
@@ -375,13 +389,24 @@ void MainWindow::on_background_button_clicked()
             QFile::copy(file_path, QString("imgs/%1").arg(file_name));
         }
 
-        if (_pixmapBg.load(QString("imgs/%1").arg(file_name))){
-            this->background_image = new QString(file_name);
-        }
+        this->background_image = new QString(file_name);
+        this->background_movie->stop();
+        this->background_movie->setFileName("imgs/" + *this->background_image);
+        this->background_movie->start();
+
+//        if (_pixmapBg.load(QString("imgs/%1").arg(file_name))){
+//            this->background_image = new QString(file_name);
+//        }
 
     } else {
         this->background_image = new QString("");
-        _pixmapBg.load(":/res/background.png");
+
+        this->background_movie->stop();
+        this->background_movie->setFileName(":/res/background.png");
+        this->background_movie->start();
+
+        //_pixmapBg.load(":/res/background.png");
+
     }
     saveConfig();
 }

@@ -30,7 +30,7 @@ private slots:
     void on_close_button_clicked();
 
 private:
-    void paintEvent(QPaintEvent *pe);
+    //void paintEvent(QPaintEvent *pe);
     void LoadFiles();
     bool LoadConfig();
     bool saveConfig();
@@ -42,6 +42,7 @@ private:
     QComboBox *selection_box;
     QPushButton *counter_button;
     QString *background_image;
+    QMovie *background_movie;
     QString *pokemmo_path;
     QString *counter_path;
     bool counter = false;
