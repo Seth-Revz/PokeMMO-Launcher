@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://i.revz.dev/eMnL46O.png" width=600>
+    <img src="https://i.imgur.com/FR2L9VJ.png" width=600>
     <p align="center">Easily switch accounts without needing to sign in everytime.</p>
 </p>
 <br>
