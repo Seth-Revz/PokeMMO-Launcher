@@ -76,17 +76,6 @@ MainWindow::MainWindow(QWidget *parent)
     selection_frame->setStyleSheet("QFrame{background-color: rgba(0,0,0,90); border-radius: 5px;}");
     selection_frame->lower();
 
-//    this->frame = new QFrame(this);
-//    this->frame->setGeometry(0, 5, windowWidth, windowHeight/14);
-//    this->frame->setStyleSheet("background-color: rgba(0,0,0,90);");
-
-//    QLabel *label = new QLabel(this);
-//    label->setText("PokeMMO Launcher");
-//    label->setFont(QFont(mechabold, windowHeight/14 - 10));
-//    label->adjustSize();
-//    label->setStyleSheet("color: rgb(255, 255, 255);");
-//    label->setGeometry((windowWidth-label->width())/2, 5, label->width(), windowHeight/14);
-
     QPushButton *counter_folder_button = new QPushButton(this);
     counter_folder_button->setGeometry(windowWidth-(4*(windowHeight/14)) - 5, 5, windowHeight/14, windowHeight/14);
     counter_folder_button->setFlat(true);
@@ -138,7 +127,7 @@ MainWindow::MainWindow(QWidget *parent)
     QTextStream(stdout) << "\"" << *this->background_image << "\"\n";
 
     if(!this->background_image->isEmpty()){
-        this->background_movie = new QMovie("imgs/" + *this->background_image);
+        this->background_movie = new QMovie("launcher-backgrounds/" + *this->background_image);
     } else {
         this->background_movie = new QMovie(":/res/background.png");
     }
@@ -147,34 +136,6 @@ MainWindow::MainWindow(QWidget *parent)
     movie_label->setAttribute(Qt::WA_NoSystemBackground);
     movie_label->setMovie(this->background_movie);
 }
-
-MainWindow::~MainWindow()
-{
-//    delete ui;
-}
-
-//void MainWindow::paintEvent(QPaintEvent *pe)
-//{
-//    (void)pe;
-//    QPainter painter(this);
-
-//    auto winSize = size();
-//    auto pixmapRatio = (float)_pixmapBg.width() / _pixmapBg.height();
-//    auto windowRatio = (float)winSize.width() / winSize.height();
-
-//    if(pixmapRatio > windowRatio)
-//    {
-//      auto newWidth = (int)(winSize.height() * pixmapRatio);
-//      auto offset = (newWidth - winSize.width()) / -2;
-//      painter.drawPixmap(offset, 0, newWidth, winSize.height(), _pixmapBg);
-//    }
-//    else
-//    {
-//      auto newHeight = (int)(winSize.width() / pixmapRatio);
-//      auto offset = (newHeight - winSize.height()) / -2;
-//      painter.drawPixmap(0, offset, winSize.width(), newHeight, _pixmapBg);
-//    }
-//}
 
 void MainWindow::LoadFiles()
 {
@@ -281,11 +242,11 @@ void MainWindow::on_launch_button_clicked()
 
 void MainWindow::on_add_button_clicked()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Select Credential File", this->pokemmo_path->toLatin1() + "/config");
-    if (fileName != ""){
+    QString fileName = this->pokemmo_path->toLatin1() + "/config/savedcredentials.properties";
+    if (QFile::exists(fileName)){
         bool ok;
         QString text = QInputDialog::getText(this, tr("Save as"),
-                                             tr("Save file as:"), QLineEdit::Normal,
+                                             tr("Save current login as:"), QLineEdit::Normal,
                                              "", &ok);
         if (ok && !text.isEmpty()){
             if (QFile::exists(QString("files/%1.cred").arg(text)))
@@ -295,6 +256,8 @@ void MainWindow::on_add_button_clicked()
             QFile::copy(fileName, QString("files/%1.cred").arg(text));
         }
         LoadFiles();
+    } else {
+        QMessageBox::critical(this, "No savedcredentials.properties file", "No savedcredentials.properties file was found. Log into PokeMMO first.");
     }
     saveConfig();
 }
@@ -302,11 +265,14 @@ void MainWindow::on_add_button_clicked()
 void MainWindow::on_remove_button_clicked()
 {
     QString selected = this->selection_box->currentText();
-    if (QFile::exists(QString("files/%1.cred").arg(selected)))
-    {
-        QFile::remove(QString("files/%1.cred").arg(selected));
+    QMessageBox::StandardButton reply = QMessageBox::question(this, "Are you sure?", "Are you sure you want to remove " + selected + "?");
+    if (reply == QMessageBox::Yes){
+        if (QFile::exists(QString("files/%1.cred").arg(selected)))
+        {
+            QFile::remove(QString("files/%1.cred").arg(selected));
+        }
+        LoadFiles();
     }
-    LoadFiles();
 }
 
 void MainWindow::on_counter_button_clicked()
@@ -316,7 +282,7 @@ void MainWindow::on_counter_button_clicked()
     if (this->counter){
         if(this->counter_path->toLatin1() == ""){
             QMessageBox mb;
-            mb.warning(this, "Warning: No Counter Program Set", "There is no counter program set.\nPlease select your counter's .exe in the next dialog.", QMessageBox::Ok);
+            mb.warning(this, "Warning: No Counter Program Set", "There is no counter program set.\nPlease select your counter's executable (.exe) in the next window.", QMessageBox::Ok);
             QString file_path = QFileDialog::getOpenFileName(this, "Counter Program", this->pokemmo_path->toLatin1());
             if(file_path != ""){
                 this->counter_path = new QString(file_path);
@@ -355,7 +321,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event)
 
 void MainWindow::on_counter_folder_button_clicked()
 {
-    QString file_path = QFileDialog::getOpenFileName(this, "Select the .exe of Counter Program", this->pokemmo_path->toLatin1());
+    QString file_path = QFileDialog::getOpenFileName(this, "Select the .exe of your Counter Program", this->pokemmo_path->toLatin1());
 
     if (file_path != "")
         this->counter_path = new QString(file_path);
@@ -365,7 +331,7 @@ void MainWindow::on_counter_folder_button_clicked()
 
 void MainWindow::on_pokemmo_folder_button_clicked()
 {
-    QString file_path = QFileDialog::getExistingDirectory(this, "Select PokeMMO Folder", QDir::homePath());
+    QString file_path = QFileDialog::getExistingDirectory(this, "Select PokeMMO FOLDER", QDir::homePath());
 
     if (file_path != "")
         this->pokemmo_path = new QString(file_path);
@@ -375,28 +341,24 @@ void MainWindow::on_pokemmo_folder_button_clicked()
 
 void MainWindow::on_background_button_clicked()
 {
-    QString file_path = QFileDialog::getOpenFileName(this, "New Background Image", QDir::homePath() + "/Pictures");
+    QString file_path = QFileDialog::getOpenFileName(this, "New Background Image/GIF/MP4", QDir::homePath() + "/Pictures");
 
     if (file_path != ""){
-        QDir().mkdir("imgs");
+        QDir().mkdir("launcher-backgrounds");
         QString file_name = file_path.split('/').last();
 
-        if (QFile::exists(QString("imgs/%1").arg(file_name))){
-            QFile::copy(file_path, QString("imgs/temp_image"));
-            QFile::remove(QString("imgs/%1").arg(file_name));
-            QFile::rename("imgs/temp_image", "imgs/" + file_name);
+        if (QFile::exists(QString("launcher-backgrounds/%1").arg(file_name))){
+            QFile::copy(file_path, QString("launcher-backgrounds/temp_image"));
+            QFile::remove(QString("launcher-backgrounds/%1").arg(file_name));
+            QFile::rename("launcher-backgrounds/temp_image", "launcher-backgrounds/" + file_name);
         }else{
-            QFile::copy(file_path, QString("imgs/%1").arg(file_name));
+            QFile::copy(file_path, QString("launcher-backgrounds/%1").arg(file_name));
         }
 
         this->background_image = new QString(file_name);
         this->background_movie->stop();
-        this->background_movie->setFileName("imgs/" + *this->background_image);
+        this->background_movie->setFileName("launcher-backgrounds/" + *this->background_image);
         this->background_movie->start();
-
-//        if (_pixmapBg.load(QString("imgs/%1").arg(file_name))){
-//            this->background_image = new QString(file_name);
-//        }
 
     } else {
         this->background_image = new QString("");
@@ -404,9 +366,6 @@ void MainWindow::on_background_button_clicked()
         this->background_movie->stop();
         this->background_movie->setFileName(":/res/background.png");
         this->background_movie->start();
-
-        //_pixmapBg.load(":/res/background.png");
-
     }
     saveConfig();
 }
