@@ -75,6 +75,8 @@ MainWindow::MainWindow(QWidget *parent)
     selection_frame->setGeometry(this->selection_box->geometry().left() - 10, this->selection_box->geometry().top() - 10, selection_frame->width(), selection_frame->height());
     selection_frame->setStyleSheet("QFrame{background-color: rgba(0,0,0,90); border-radius: 5px;}");
     selection_frame->lower();
+    // Put movie back on bottom
+    movie_label->lower();
 
     QPushButton *counter_folder_button = new QPushButton(this);
     counter_folder_button->setGeometry(windowWidth-(4*(windowHeight/14)) - 5, 5, windowHeight/14, windowHeight/14);
@@ -265,6 +267,10 @@ void MainWindow::on_add_button_clicked()
 void MainWindow::on_remove_button_clicked()
 {
     QString selected = this->selection_box->currentText();
+    if (selected == ""){
+        return;
+    }
+
     QMessageBox::StandardButton reply = QMessageBox::question(this, "Are you sure?", "Are you sure you want to remove " + selected + "?");
     if (reply == QMessageBox::Yes){
         if (QFile::exists(QString("files/%1.cred").arg(selected)))
