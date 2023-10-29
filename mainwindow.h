@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QFrame>
 #include <QComboBox>
+#include <QLabel>
 #include <QPushButton>
 #include <QDir>
 
@@ -30,17 +31,27 @@ private slots:
     void on_close_button_clicked();
 
 private:
-    //void paintEvent(QPaintEvent *pe);
-    void LoadFiles();
+    void SetupUI(int, int);
+    void LoadCredFiles();
     bool LoadConfig();
     bool saveConfig();
+    void LoadBackground(int, int);
     QPixmap _pixmapBg;
     bool pressed = false;
     QPoint current;
     QFrame *frame;
     QFrame *selection_frame;
     QComboBox *selection_box;
+    QLabel *movie_label;
+    QPushButton *launch_button;
+    QPushButton *add_button;
+    QPushButton *remove_button;
     QPushButton *counter_button;
+    QLineEdit *selection_edit;
+    QPushButton *counter_folder_button;
+    QPushButton *pokemmo_folder_button;
+    QPushButton *background_button;
+    QPushButton *close_button;
     QString *background_image;
     QMovie *background_movie;
     QString *pokemmo_path;
