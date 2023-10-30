@@ -6,5 +6,6 @@
         <file>res/background.png</file>
         <file>res/counter_icon.png</file>
         <file>res/pokemmo_icon.png</file>
+        <file>res/settings_icon.png</file>
     </qresource>
 </RCC>

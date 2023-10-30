@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "settingswindow.h"
 #include <QApplication>
 #include <QProcess>
 #include <QFileDialog>
@@ -15,24 +16,27 @@
 #include <QComboBox>
 #include <QFontDatabase>
 #include <QMessageBox>
+#include <QFileInfo>
 
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint | Qt::FramelessWindowHint);
+    QDir().mkdir("files");
+    QDir().mkdir("launcher-backgrounds");
 
     QRect screen = QApplication::primaryScreen()->geometry();
-    int windowWidth = screen.width()/2;
-    int windowHeight = screen.height()/2;
-    setFixedSize(windowWidth, windowHeight);
+    int window_width = screen.width()/2;
+    int window_height = screen.height()/2;
+    setFixedSize(window_width, window_height);
 
-    SetupUI(windowWidth, windowHeight);
+    LoadSettings();
+    SetupUI(window_width, window_height);
+    _pixmapBg.load(":/res/background.png");
 
-    QDir().mkdir("files");
     LoadCredFiles();
-    LoadConfig();
-    LoadBackground(windowWidth, windowHeight);
+    LoadBackground(window_width, window_height);
 }
 
 void MainWindow::SetupUI(int windowWidth, int windowHeight){
@@ -68,7 +72,11 @@ void MainWindow::SetupUI(int windowWidth, int windowHeight){
     counter_button->setGeometry(launch_button->geometry().right() - counter_button->width(), windowHeight - (windowHeight/5) - counter_button->height() - 3, counter_button->width(), counter_button->height());
     counter_button->setText("Counter");
     counter_button->setFont(QFont(mechabold, counter_button->height()/2));
-    counter_button->setStyleSheet("background-color: #A91409; color: white; border: 2px solid black;");
+    if (counter_bool){
+        counter_button->setStyleSheet("background-color: #4CAF50; color: white; border: 2px solid black;");
+    }else{
+        counter_button->setStyleSheet("background-color: #A91409; color: white; border: 2px solid black;");
+    }
 
     selection_box = new QComboBox(this);
     selection_box->setFixedSize(windowWidth/3, windowHeight/18);
@@ -78,6 +86,7 @@ void MainWindow::SetupUI(int windowWidth, int windowHeight){
     selection_edit->setAlignment(Qt::AlignCenter);
     selection_edit->setReadOnly(true);
     selection_box->setGeometry((windowWidth - selection_box->width())/2, windowHeight - (windowHeight/5) - selection_box->height() - add_button->height() - 6, selection_box->width(), selection_box->height());
+    selection_box->setCurrentText(active_login);
 
     selection_frame = new QFrame(this);
     selection_frame->setFixedSize(windowWidth/3 + 20, launch_button->geometry().bottom() - selection_box->geometry().top() + 20);
@@ -87,47 +96,32 @@ void MainWindow::SetupUI(int windowWidth, int windowHeight){
     // Put movie back on bottom
     movie_label->lower();
 
-    counter_folder_button = new QPushButton(this);
-    counter_folder_button->setGeometry(windowWidth-(4*(windowHeight/14)) - 5, 5, windowHeight/14, windowHeight/14);
-    counter_folder_button->setFlat(true);
-    QPixmap counter_folder_pixmap(":/res/counter_icon.png");
-    QIcon counter_folder_icon(counter_folder_pixmap);
-    counter_folder_button->setIcon(counter_folder_icon);
-    counter_folder_button->setIconSize(QSize(windowHeight/15, windowHeight/15));
-    counter_folder_button->setStyleSheet("QPushButton:pressed{background-color: rgba(0,0,0,0);}");
+    QLabel *black = new QLabel(this);
+    black->setGeometry(windowWidth-(2*(windowHeight/12.5)), 0, windowHeight/6, windowHeight/11);
+    black->setStyleSheet("background-color: black; border: 0px; border-radius: 5px;");
 
-    pokemmo_folder_button = new QPushButton(this);
-    pokemmo_folder_button->setGeometry(windowWidth-(3*(windowHeight/14)) - 5, 5, windowHeight/14, windowHeight/14);
-    pokemmo_folder_button->setFlat(true);
-    QPixmap pokemmo_folder_pixmap(":/res/pokemmo_icon.png");
+    settings_button = new QPushButton(this);
+    settings_button->setGeometry(windowWidth-(2*(windowHeight/14)) - 5, 5, windowHeight/14, windowHeight/14);
+    settings_button->setFlat(true);
+    QPixmap pokemmo_folder_pixmap(":/res/settings_icon.png");
     QIcon pokemmo_folder_icon(pokemmo_folder_pixmap);
-    pokemmo_folder_button->setIcon(pokemmo_folder_icon);
-    pokemmo_folder_button->setIconSize(QSize(windowHeight/15, windowHeight/15));
-    pokemmo_folder_button->setStyleSheet("QPushButton:pressed{background-color: rgba(0,0,0,0);}");
-
-    background_button = new QPushButton(this);
-    background_button->setGeometry(windowWidth-(2*(windowHeight/14)) - 5, 5, windowHeight/14, windowHeight/14);
-    background_button->setFlat(true);
-    QPixmap background_pixmap(":/res/background_icon.svg");
-    QIcon background_button_icon(background_pixmap);
-    background_button->setIcon(background_button_icon);
-    background_button->setIconSize(QSize(windowHeight/15, windowHeight/15));
-    background_button->setStyleSheet("QPushButton:pressed{background-color: rgba(0,0,0,0);}");
+    settings_button->setIcon(pokemmo_folder_icon);
+    settings_button->setIconSize(QSize(windowHeight/15, windowHeight/15));
+    settings_button->setStyleSheet("QPushButton:pressed{background-color: rgba(0,0,0,0);}");
 
     close_button = new QPushButton(this);
     close_button->setGeometry(windowWidth-(windowHeight/14) - 5, 5, windowHeight/14, windowHeight/14);
     close_button->setFlat(true);
     close_button->setFont(QFont(mechabold, windowHeight/14 - 10));
     close_button->setText("X");
-    close_button->setStyleSheet("QPushButton:pressed{background-color: rgba(0,0,0,0);}");
+    close_button->setStyleSheet("color: white; border: 0px;");
+//    close_button->setStyleSheet("QPushButton:pressed{background-color: rgba(0,0,0,0);}");
 
     connect(launch_button, SIGNAL(clicked()), this, SLOT(on_launch_button_clicked()));
     connect(add_button, SIGNAL(clicked()), this, SLOT(on_add_button_clicked()));
     connect(remove_button, SIGNAL(clicked()), this, SLOT(on_remove_button_clicked()));
     connect(counter_button, SIGNAL(clicked()), this, SLOT(on_counter_button_clicked()));
-    connect(counter_folder_button, SIGNAL(clicked()), this, SLOT(on_counter_folder_button_clicked()));
-    connect(pokemmo_folder_button, SIGNAL(clicked()), this, SLOT(on_pokemmo_folder_button_clicked()));
-    connect(background_button, SIGNAL(clicked()), this, SLOT(on_background_button_clicked()));
+    connect(settings_button, SIGNAL(clicked()), this, SLOT(on_settings_button_clicked()));
     connect(close_button, SIGNAL(clicked()), this, SLOT(on_close_button_clicked()));
 }
 
@@ -139,83 +133,42 @@ void MainWindow::LoadCredFiles()
     foreach(QString filename, files) {
         selection_box->addItem(filename.remove(".cred"));
     }
+    int index = selection_box->findText(active_login);
+    if (index != -1){
+        selection_box->setCurrentIndex(index);
+    }
 }
 
-bool MainWindow::LoadConfig()
+void MainWindow::SaveSettings()
 {
-    QFile file("files/config.txt");
-    if(!file.open(QIODevice::ReadOnly)){
-        QTextStream(stdout) << "Cannot open the file. \n" << file.errorString() << "\n";
-        _pixmapBg.load(":/res/background.png");
-
-        if (QFile::exists(QDir::rootPath() + "/Program Files/PokeMMO/PokeMMO.exe")){
-            pokemmo_path = new QString(QDir::rootPath() + "/Program Files/PokeMMO/PokeMMO.exe");
-        }else if(QFile::exists(QDir::homePath() + "/AppData/Local/Programs/PokeMMO/PokeMMO.exe")){
-            pokemmo_path = new QString(QDir::homePath() + "/AppData/Local/Programs/PokeMMO");
-        }else{
-            pokemmo_path = new QString("");
-            QMessageBox::warning(this, "Warning: Set PokeMMO Directory", "Could not find PokeMMO installation.\nPlease use the folder icon to set PokeMMO's path.", QMessageBox::Ok);
-        }
-
-        counter_path = new QString("");
-        background_image = new QString("");
-
-        return false;
-    }
-    QTextStream stream(&file);
-    QString path = stream.readLine();
-    if (path != ""){
-        pokemmo_path = new QString(path);
-    }else{
-        if (QFile::exists(QDir::rootPath() + "/Program Files/PokeMMO/PokeMMO.exe")){
-            pokemmo_path = new QString(QDir::rootPath() + "/Program Files/PokeMMO");
-        }else if(QFile::exists(QDir::homePath() + "/AppData/Local/Programs/PokeMMO/PokeMMO.exe")){
-            pokemmo_path = new QString(QDir::homePath() + "/AppData/Local/Programs/PokeMMO");
-        }
-    }
-
-    counter_path = new QString(stream.readLine());
-
-    selection_box->setCurrentText(stream.readLine());
-    if (stream.readLine().toInt())
-    {
-        counter = true;
-        counter_button->setStyleSheet("background-color: #4CAF50; color: white; border: 2px solid black;");
-    }
-    QString bgd(stream.readLine());
-    if (bgd != "")
-    {
-        background_image = new QString(bgd);
-    } else {
-        background_image = new QString("");
-    }
-
-    file.close();
-    return true;
+    QSettings settings("Revz", "PokeMMO-Launcher");
+    settings.beginGroup("MainSettings");
+    settings.setValue("PokeMMO-Application", pokemmo_path);
+    settings.setValue("Counter-Application", counter_path);
+    settings.setValue("Counter-Bool", counter_bool);
+    settings.setValue("Cycle-Bool", cycle_bool);
+    settings.setValue("Active_Login", active_login);
+    settings.setValue("Active-Background", active_background);
+    settings.endGroup();
 }
 
-bool MainWindow::saveConfig()
+void MainWindow::LoadSettings()
 {
-    QFile file("files/config.txt");
-    if(!file.open(QIODevice::WriteOnly)){
-        QTextStream(stdout) << "Cannot open the file. \n" << file.errorString() << "\n";
-        return false;
-    }
-
-    QTextStream stream(&file);
-    stream << pokemmo_path->toLatin1() << "\n";
-    stream << counter_path->toLatin1() << "\n";
-    stream << selection_box->currentText() << "\n";
-    stream << counter << "\n";
-    stream << background_image->toLatin1() << "\n";
-
-    file.close();
-    return true;
+    QSettings settings("Revz", "PokeMMO-Launcher");
+    settings.beginGroup("MainSettings");
+    pokemmo_path = settings.value("PokeMMO-Application", "").toString();
+    counter_path = settings.value("Counter-Application", "").toString();
+    counter_bool = settings.value("Counter-Bool", false).toBool();
+    cycle_bool = settings.value("Cycle-Bool", false).toBool();
+    active_login = settings.value("Active_Login", "").toString();
+    active_background = settings.value("Active-Background", "").toString();
+    settings.endGroup();
 }
 
 void MainWindow::LoadBackground(int windowWidth, int windowHeight){
-    if(!background_image->isEmpty()){
-        background_movie = new QMovie("launcher-backgrounds/" + *background_image);
+    QFileInfo check_file("launcher-backgrounds/" + active_background);
+    if(!active_background.isEmpty() && check_file.exists()){
+        background_movie = new QMovie("launcher-backgrounds/" + active_background);
     } else {
         background_movie = new QMovie(":/res/background.png");
     }
@@ -225,30 +178,45 @@ void MainWindow::LoadBackground(int windowWidth, int windowHeight){
     movie_label->setMovie(background_movie);
 }
 
+void MainWindow::ReloadBackground(){
+    if (active_background != ""){
+        background_movie->stop();
+        background_movie->setFileName("launcher-backgrounds/" + active_background);
+        background_movie->start();
+    } else {
+        background_movie->stop();
+        background_movie->setFileName(":/res/background.png");
+        background_movie->start();
+    }
+}
+
 void MainWindow::on_launch_button_clicked()
 {
     QString selected = selection_box->currentText();
-    if (QFile::exists(pokemmo_path->toLatin1() + "/config/savedcredentials.properties")){
-        QFile::remove(pokemmo_path->toLatin1() + "/config/savedcredentials.properties");
+    QString pokemmo_folder = QFileInfo(pokemmo_path).absolutePath().toLatin1();
+    active_login = QString(selected);
+
+    if (QFile::exists(pokemmo_folder + "/config/savedcredentials.properties")){
+        QFile::remove(pokemmo_folder + "/config/savedcredentials.properties");
     }
-    QFile::copy(QString("files/%1.cred").arg(selected), pokemmo_path->toLatin1() + "/config/savedcredentials.properties");
+    QFile::copy(QString("files/%1.cred").arg(selected), pokemmo_folder + "/config/savedcredentials.properties");
 
-    QProcess::startDetached(pokemmo_path->toLatin1() + "/PokeMMO.exe");
+    QProcess::startDetached(pokemmo_folder + "/PokeMMO.exe");
 
-    if (counter){
+    if (counter_bool){
         QProcess *child = new QProcess();
-        QString file_name = counter_path->split('/').last();
-        child->setWorkingDirectory(counter_path->toLatin1().left(counter_path->size() - file_name.size()));
-        child->start(counter_path->toLatin1());
+        QString file_name = counter_path.split('/').last();
+        child->setWorkingDirectory(counter_path.toLatin1().left(counter_path.size() - file_name.size()));
+        child->start(counter_path.toLatin1());
     }
 
-    saveConfig();
+    SaveSettings();
     QApplication::quit();
 }
 
 void MainWindow::on_add_button_clicked()
 {
-    QString fileName = pokemmo_path->toLatin1() + "/config/savedcredentials.properties";
+    QString fileName = QFileInfo(pokemmo_path).absolutePath().toLatin1() + "/config/savedcredentials.properties";
     if (QFile::exists(fileName)){
         bool ok;
         QString text = QInputDialog::getText(this, tr("Save as"),
@@ -265,7 +233,7 @@ void MainWindow::on_add_button_clicked()
     } else {
         QMessageBox::critical(this, "No savedcredentials.properties file", "No savedcredentials.properties file was found. Log into PokeMMO first.");
     }
-    saveConfig();
+    SaveSettings();
 }
 
 void MainWindow::on_remove_button_clicked()
@@ -287,17 +255,17 @@ void MainWindow::on_remove_button_clicked()
 
 void MainWindow::on_counter_button_clicked()
 {
-    counter = !counter;
+    counter_bool = !counter_bool;
 
-    if (counter){
-        if(counter_path->toLatin1() == ""){
+    if (counter_bool){
+        if(counter_path.toLatin1() == ""){
             QMessageBox mb;
             mb.warning(this, "Warning: No Counter Program Set", "There is no counter program set.\nPlease select your counter's executable (.exe) in the next window.", QMessageBox::Ok);
-            QString file_path = QFileDialog::getOpenFileName(this, "Counter Program", pokemmo_path->toLatin1());
+            QString file_path = QFileDialog::getOpenFileName(this, "Counter Program", pokemmo_path.toLatin1());
             if(file_path != ""){
-                counter_path = new QString(file_path);
+                counter_path = *new QString(file_path);
             }else{
-                counter = !counter;
+                counter_bool = !counter_bool;
                 return;
             }
         }
@@ -329,59 +297,18 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event)
         move(event->globalPosition().x()-mouseClick_X_Coordinate,event->globalPosition().y()-mouseClick_Y_Coordinate);
 }
 
-void MainWindow::on_counter_folder_button_clicked()
+void MainWindow::on_settings_button_clicked()
 {
-    QString file_path = QFileDialog::getOpenFileName(this, "Select the .exe of your Counter Program", pokemmo_path->toLatin1());
+    SettingsWindow settings(this);
+    settings.setModal(true);
+    settings.exec();
 
-    if (file_path != "")
-        counter_path = new QString(file_path);
-
-    saveConfig();
-}
-
-void MainWindow::on_pokemmo_folder_button_clicked()
-{
-    QString file_path = QFileDialog::getExistingDirectory(this, "Select PokeMMO FOLDER", QDir::homePath());
-
-    if (file_path != "")
-        pokemmo_path = new QString(file_path);
-
-    saveConfig();
-}
-
-void MainWindow::on_background_button_clicked()
-{
-    QString file_path = QFileDialog::getOpenFileName(this, "New Background Image/GIF", QDir::homePath() + "/Pictures");
-
-    if (file_path != ""){
-        QDir().mkdir("launcher-backgrounds");
-        QString file_name = file_path.split('/').last();
-
-        if (QFile::exists(QString("launcher-backgrounds/%1").arg(file_name))){
-            QFile::copy(file_path, QString("launcher-backgrounds/temp_image"));
-            QFile::remove(QString("launcher-backgrounds/%1").arg(file_name));
-            QFile::rename("launcher-backgrounds/temp_image", "launcher-backgrounds/" + file_name);
-        }else{
-            QFile::copy(file_path, QString("launcher-backgrounds/%1").arg(file_name));
-        }
-
-        background_image = new QString(file_name);
-        background_movie->stop();
-        background_movie->setFileName("launcher-backgrounds/" + *background_image);
-        background_movie->start();
-
-    } else {
-        background_image = new QString("");
-
-        background_movie->stop();
-        background_movie->setFileName(":/res/background.png");
-        background_movie->start();
-    }
-    saveConfig();
+    LoadSettings();
+    ReloadBackground();
 }
 
 void MainWindow::on_close_button_clicked()
 {
-    saveConfig();
+    SaveSettings();
     QApplication::quit();
 }

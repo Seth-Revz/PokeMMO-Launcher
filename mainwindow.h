@@ -25,19 +25,15 @@ private slots:
     void on_add_button_clicked();
     void on_remove_button_clicked();
     void on_counter_button_clicked();
-    void on_counter_folder_button_clicked();
-    void on_pokemmo_folder_button_clicked();
-    void on_background_button_clicked();
+    void on_settings_button_clicked();
     void on_close_button_clicked();
 
 private:
     void SetupUI(int, int);
     void LoadCredFiles();
-    bool LoadConfig();
-    bool saveConfig();
     void LoadBackground(int, int);
+    void ReloadBackground();
     QPixmap _pixmapBg;
-    bool pressed = false;
     QPoint current;
     QFrame *frame;
     QFrame *selection_frame;
@@ -48,16 +44,23 @@ private:
     QPushButton *remove_button;
     QPushButton *counter_button;
     QLineEdit *selection_edit;
-    QPushButton *counter_folder_button;
-    QPushButton *pokemmo_folder_button;
-    QPushButton *background_button;
+    QPushButton *settings_button;
     QPushButton *close_button;
     QString *background_image;
     QMovie *background_movie;
-    QString *pokemmo_path;
-    QString *counter_path;
-    bool counter = false;
 
+    void SaveSettings();
+    void LoadSettings();
+
+    QString pokemmo_path;
+    QString counter_path;
+    bool counter_bool = false;
+    bool cycle_bool = false;
+    QString active_login;
+    QString active_background;
+
+
+    bool pressed = false;
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
