@@ -136,6 +136,9 @@ void MainWindow::LoadCredFiles()
     int index = selection_box->findText(active_login);
     if (index != -1){
         selection_box->setCurrentIndex(index);
+    }else{
+        selection_box->setCurrentIndex(0);
+        active_login = "";
     }
 }
 
