@@ -7,6 +7,10 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QDir>
+#include <QMediaPlayer>
+#include <QGraphicsScene>
+#include <QGraphicsView>
+#include <QGraphicsVideoItem>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -29,10 +33,13 @@ private slots:
     void on_close_button_clicked();
 
 private:
-    void SetupUI(int, int);
+    void SetupUI();
     void LoadCredFiles();
-    void LoadBackground(int, int);
+    void LoadBackground();
     void ReloadBackground();
+    void DefaultBackground();
+    int window_width;
+    int window_height;
     QPixmap _pixmapBg;
     QPoint current;
     QFrame *frame;
@@ -48,6 +55,10 @@ private:
     QPushButton *close_button;
     QString *background_image;
     QMovie *background_movie;
+    QMediaPlayer *video_player;
+    QGraphicsScene *scene;
+    QGraphicsView *view;
+    QGraphicsVideoItem *video_item;
 
     void SaveSettings();
     void LoadSettings();

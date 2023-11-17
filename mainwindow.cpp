@@ -27,49 +27,60 @@ MainWindow::MainWindow(QWidget *parent)
     QDir().mkdir("launcher-backgrounds");
 
     QRect screen = QApplication::primaryScreen()->geometry();
-    int window_width = screen.width()/2;
-    int window_height = screen.height()/2;
+    window_width = screen.width()/2;
+    window_height = screen.height()/2;
     setFixedSize(window_width, window_height);
 
     LoadSettings();
-    SetupUI(window_width, window_height);
-    _pixmapBg.load(":/res/background.png");
-
+    SetupUI();
     LoadCredFiles();
-    LoadBackground(window_width, window_height);
+    LoadBackground();
 }
 
-void MainWindow::SetupUI(int windowWidth, int windowHeight){
+void MainWindow::SetupUI(){
     int mecha_id = QFontDatabase::addApplicationFont(":/res/mechabold.ttf");
     QString mechabold = QFontDatabase::applicationFontFamilies(mecha_id).at(0);
 
+    video_player = new QMediaPlayer();
+    video_item = new QGraphicsVideoItem();
+    video_item->setSize(QSize(window_width, window_height));
+    video_player->setVideoOutput(video_item);
+    video_player->setLoops(QMediaPlayer::Infinite);
+
+    scene = new QGraphicsScene();
+    scene->addItem(video_item);
+    view = new QGraphicsView(scene, this);
+    view->setGeometry(0, 0, window_width, window_height);
+    view->setFrameStyle(QFrame::NoFrame);
+    view->setAttribute(Qt::WA_TransparentForMouseEvents);
+
     movie_label = new QLabel(this);
-    movie_label->setGeometry(0, 0, windowWidth, windowHeight);
+    movie_label->setGeometry(0, 0, window_width, window_height);
 
     launch_button = new QPushButton(this);
-    launch_button->setFixedSize(windowWidth/3, windowHeight/12);
-    launch_button->setGeometry((windowWidth - launch_button->width())/2, windowHeight - (windowHeight/5), launch_button->width(), launch_button->height());
+    launch_button->setFixedSize(window_width/3, window_height/12);
+    launch_button->setGeometry((window_width - launch_button->width())/2, window_height - (window_height/5), launch_button->width(), launch_button->height());
     launch_button->setText("Launch");
     launch_button->setFont(QFont(mechabold, launch_button->height()/2));
     launch_button->setStyleSheet("background-color: #4CAF50; color: white; border: 0px; border-radius: 5px;");
 
     add_button = new QPushButton(this);
-    add_button->setFixedSize(windowWidth/9 - 5, windowHeight/18);
-    add_button->setGeometry(launch_button->geometry().left(), windowHeight - (windowHeight/5) - add_button->height() - 3, add_button->width(), add_button->height());
+    add_button->setFixedSize(window_width/9 - 5, window_height/18);
+    add_button->setGeometry(launch_button->geometry().left(), window_height - (window_height/5) - add_button->height() - 3, add_button->width(), add_button->height());
     add_button->setText("Add");
     add_button->setFont(QFont(mechabold, add_button->height()/2));
     add_button->setStyleSheet("background-color: #E7E7E7; color: #4CAF50; border: 2px solid #4CAF50;");
 
     remove_button = new QPushButton(this);
-    remove_button->setFixedSize(windowWidth/9, windowHeight/18);
-    remove_button->setGeometry((windowWidth - remove_button->width())/2, windowHeight - (windowHeight/5) - remove_button->height() - 3, remove_button->width(), remove_button->height());
+    remove_button->setFixedSize(window_width/9, window_height/18);
+    remove_button->setGeometry((window_width - remove_button->width())/2, window_height - (window_height/5) - remove_button->height() - 3, remove_button->width(), remove_button->height());
     remove_button->setText("Remove");
     remove_button->setFont(QFont(mechabold, add_button->height()/2));
     remove_button->setStyleSheet("background-color: #E7E7E7; color: #A91409; border: 2px solid #A91409;");
 
     counter_button = new QPushButton(this);
-    counter_button->setFixedSize(windowWidth/9 - 5, windowHeight/18);
-    counter_button->setGeometry(launch_button->geometry().right() - counter_button->width(), windowHeight - (windowHeight/5) - counter_button->height() - 3, counter_button->width(), counter_button->height());
+    counter_button->setFixedSize(window_width/9 - 5, window_height/18);
+    counter_button->setGeometry(launch_button->geometry().right() - counter_button->width(), window_height - (window_height/5) - counter_button->height() - 3, counter_button->width(), counter_button->height());
     counter_button->setText("Counter");
     counter_button->setFont(QFont(mechabold, counter_button->height()/2));
     if (counter_bool){
@@ -79,43 +90,45 @@ void MainWindow::SetupUI(int windowWidth, int windowHeight){
     }
 
     selection_box = new QComboBox(this);
-    selection_box->setFixedSize(windowWidth/3, windowHeight/18);
+    selection_box->setFixedSize(window_width/3, window_height/18);
     selection_box->setFont(QFont(mechabold, selection_box->height()/2));
     selection_box->setEditable(true);
     selection_edit = selection_box->lineEdit();
     selection_edit->setAlignment(Qt::AlignCenter);
     selection_edit->setReadOnly(true);
-    selection_box->setGeometry((windowWidth - selection_box->width())/2, windowHeight - (windowHeight/5) - selection_box->height() - add_button->height() - 6, selection_box->width(), selection_box->height());
+    selection_box->setGeometry((window_width - selection_box->width())/2, window_height - (window_height/5) - selection_box->height() - add_button->height() - 6, selection_box->width(), selection_box->height());
     selection_box->setCurrentText(active_login);
 
     selection_frame = new QFrame(this);
-    selection_frame->setFixedSize(windowWidth/3 + 20, launch_button->geometry().bottom() - selection_box->geometry().top() + 20);
+    selection_frame->setFixedSize(window_width/3 + 20, launch_button->geometry().bottom() - selection_box->geometry().top() + 20);
     selection_frame->setGeometry(selection_box->geometry().left() - 10, selection_box->geometry().top() - 10, selection_frame->width(), selection_frame->height());
     selection_frame->setStyleSheet("QFrame{background-color: rgba(0,0,0,90); border-radius: 5px;}");
     selection_frame->lower();
-    // Put movie back on bottom
-    movie_label->lower();
 
     QLabel *black = new QLabel(this);
-    black->setGeometry(windowWidth-(2*(windowHeight/12.5)), 0, windowHeight/6, windowHeight/11);
+    black->setGeometry(window_width-(2*(window_height/12.5)), 0, window_height/6, window_height/11);
     black->setStyleSheet("background-color: black; border: 0px; border-radius: 5px;");
 
     settings_button = new QPushButton(this);
-    settings_button->setGeometry(windowWidth-(2*(windowHeight/14)) - 5, 5, windowHeight/14, windowHeight/14);
+    settings_button->setGeometry(window_width-(2*(window_height/14)) - 5, 5, window_height/14, window_height/14);
     settings_button->setFlat(true);
     QPixmap pokemmo_folder_pixmap(":/res/settings_icon.png");
     QIcon pokemmo_folder_icon(pokemmo_folder_pixmap);
     settings_button->setIcon(pokemmo_folder_icon);
-    settings_button->setIconSize(QSize(windowHeight/15, windowHeight/15));
+    settings_button->setIconSize(QSize(window_height/15, window_height/15));
     settings_button->setStyleSheet("QPushButton:pressed{background-color: rgba(0,0,0,0);}");
 
     close_button = new QPushButton(this);
-    close_button->setGeometry(windowWidth-(windowHeight/14) - 5, 5, windowHeight/14, windowHeight/14);
+    close_button->setGeometry(window_width-(window_height/14) - 5, 5, window_height/14, window_height/14);
     close_button->setFlat(true);
-    close_button->setFont(QFont(mechabold, windowHeight/14 - 10));
+    close_button->setFont(QFont(mechabold, window_height/14 - 10));
     close_button->setText("X");
     close_button->setStyleSheet("color: white; border: 0px;");
 //    close_button->setStyleSheet("QPushButton:pressed{background-color: rgba(0,0,0,0);}");
+
+    // Put background back on bottom
+    movie_label->lower();
+    view->lower();
 
     connect(launch_button, SIGNAL(clicked()), this, SLOT(on_launch_button_clicked()));
     connect(add_button, SIGNAL(clicked()), this, SLOT(on_add_button_clicked()));
@@ -168,28 +181,45 @@ void MainWindow::LoadSettings()
     settings.endGroup();
 }
 
-void MainWindow::LoadBackground(int windowWidth, int windowHeight){
-    QFileInfo check_file("launcher-backgrounds/" + active_background);
-    if(!active_background.isEmpty() && check_file.exists()){
-        background_movie = new QMovie("launcher-backgrounds/" + active_background);
-    } else {
-        background_movie = new QMovie(":/res/background.png");
-    }
-    background_movie->setScaledSize({windowWidth, windowHeight});
-    background_movie->start();
-    movie_label->setAttribute(Qt::WA_NoSystemBackground);
-    movie_label->setMovie(background_movie);
-}
-
-void MainWindow::ReloadBackground(){
-    if (active_background != ""){
-        background_movie->stop();
-        background_movie->setFileName("launcher-backgrounds/" + active_background);
-        background_movie->start();
-    } else {
+void MainWindow::DefaultBackground() {
+    if (movie_label->movie()) {
         background_movie->stop();
         background_movie->setFileName(":/res/background.png");
         background_movie->start();
+    } else {
+        background_movie = new QMovie(":/res/background.png");
+        background_movie->setScaledSize({window_width, window_height});
+        background_movie->start();
+        movie_label->setAttribute(Qt::WA_NoSystemBackground);
+        movie_label->setMovie(background_movie);
+    }
+}
+
+void MainWindow::LoadBackground(){
+
+    DefaultBackground();
+
+    QFileInfo background_file("launcher-backgrounds/" + active_background);
+
+    if (active_background.isEmpty() || !background_file.exists())
+        return;
+
+    QString file_type = active_background.split('.').last();
+
+    if (file_type == "mp4"){
+        movie_label->hide();
+        background_movie->stop();
+        video_player->stop();
+        video_player->setSource(QUrl::fromLocalFile(background_file.absoluteFilePath()));
+        video_player->play();
+        view->show();
+    } else {
+        video_player->stop();
+        view->hide();
+        background_movie->stop();
+        background_movie->setFileName("launcher-backgrounds/" + active_background);
+        background_movie->start();
+        movie_label->show();
     }
 }
 
@@ -302,12 +332,15 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event)
 
 void MainWindow::on_settings_button_clicked()
 {
+    QString current_background = active_background.toLatin1();
     SettingsWindow settings(this);
     settings.setModal(true);
     settings.exec();
 
     LoadSettings();
-    ReloadBackground();
+    if (current_background != active_background.toLatin1()){
+        LoadBackground();
+    }
 }
 
 void MainWindow::on_close_button_clicked()
