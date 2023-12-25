@@ -1,3 +1,5 @@
+<h1>Obsolete after Xmas 2023 update.<br/>Use ingame account switching.</h1>
+  
 <p align="center">
     <img src="https://i.imgur.com/pytzvfY.png" width=600>
     <p align="center">Easily switch accounts without needing to sign in everytime.</p>
